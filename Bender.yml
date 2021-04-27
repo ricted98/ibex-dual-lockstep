@@ -5,13 +5,7 @@ dependencies:
   tech_cells_generic: { git: "git@github.com:pulp-platform/tech_cells_generic.git", version: 0.2.2 }
 
 sources:
-  - target: synthesis
-    files:
-      - rtl/ibex_register_file_latch.sv
-  - target: xilinx
-    files:
-      - rtl/ibex_register_file_fpga.sv
-  - target: not(rtl)
+  - target: not(all(any(test, ibex_include_tracer), not(ibex_exclude_tracer)))
     include_dirs:
       - rtl
       - vendor/lowrisc_ip/ip/prim/rtl
@@ -45,7 +39,10 @@ sources:
       - rtl/ibex_if_stage.sv
       # Level 4
       - rtl/ibex_core.sv
-  - target: rtl
+
+  # In case we target RTL simulation, recompile the whole core with the RISC-V
+  # formal interface so the tracer module works (`define RVFI).
+  - target: all(any(test, ibex_include_tracer), not(ibex_exclude_tracer))  
     include_dirs:
       - rtl
       - vendor/lowrisc_ip/ip/prim/rtl
@@ -82,3 +79,21 @@ sources:
       - rtl/ibex_core.sv
       # Level 5
       - rtl/ibex_core_tracing.sv
+
+  # Different register file implementations. By default, latch baser register
+  # files are used. For verilator, the flip-flop based reg files are used and
+  # for Xilinx fpgas, a dedicated implementation is used. For each version there
+  # is a dedicated override target ("ibex_use_<ff|latch|fpga>_regfile") to force
+  # usage of one particular implementation.
+  
+  - target: all(not(verilator), not(ibex_use_fpga_regfile), not(ibex_use_ff_regfile))
+    files:
+      - rtl/ibex_register_file_latch.sv
+  
+  - target: all(any(verilator, ibex_use_ff_regfile), not(ibex_use_fpga_regfile), not(ibex_use_latch_regfile))
+    files:
+      - rtl/ibex_register_file_ff.sv
+
+  - target: all(any(xilinx, ibex_use_fpga_regfile), not(ibex_use_ff_regfile), not(ibex_use_latch_regfile))
+    files:
+      - rtl/ibex_register_file_fpga.sv
