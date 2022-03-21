@@ -2,7 +2,7 @@ package:
   name: ibex
 
 dependencies:
-  tech_cells_generic: { git: "git@github.com:pulp-platform/tech_cells_generic.git", version: 0.2.2 }
+  tech_cells_generic: { git: "https://github.com/pulp-platform/tech_cells_generic.git", version: 0.2.2 }
 
 sources:
   - target: not(all(any(test, ibex_include_tracer), not(ibex_exclude_tracer)))
