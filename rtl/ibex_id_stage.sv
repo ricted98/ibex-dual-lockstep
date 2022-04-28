@@ -28,6 +28,7 @@ module ibex_id_stage #(
 ) (
     input  logic                      clk_i,
     input  logic                      rst_ni,
+    input  logic                      setback_i,
 
     output logic                      ctrl_busy_o,
     output logic                      illegal_insn_o,
@@ -387,8 +388,14 @@ module ibex_id_stage #(
     always_ff @(posedge clk_i or negedge rst_ni) begin : intermediate_val_reg
       if (!rst_ni) begin
         imd_val_q[i] <= '0;
-      end else if (imd_val_we_ex_i[i]) begin
-        imd_val_q[i] <= imd_val_d_ex_i[i];
+      end else begin
+        if (setback_i) begin
+          imd_val_q[i] <= '0;
+        end else begin
+          if (imd_val_we_ex_i[i]) begin
+            imd_val_q[i] <= imd_val_d_ex_i[i];
+          end
+        end
       end
     end
   end
@@ -423,6 +430,7 @@ module ibex_id_stage #(
   ) decoder_i (
       .clk_i                           ( clk_i                ),
       .rst_ni                          ( rst_ni               ),
+      .setback_i                       ( setback_i            ),
 
       // controller
       .illegal_insn_o                  ( illegal_insn_dec     ),
@@ -531,6 +539,7 @@ module ibex_id_stage #(
   ) controller_i (
       .clk_i                          ( clk_i                   ),
       .rst_ni                         ( rst_ni                  ),
+      .setback_i                      ( setback_i               ),
 
       .ctrl_busy_o                    ( ctrl_busy_o             ),
 
@@ -667,7 +676,11 @@ module ibex_id_stage #(
       if (!rst_ni) begin
         branch_set_q <= 1'b0;
       end else begin
-        branch_set_q <= branch_set_d;
+        if (setback_i) begin
+          branch_set_q <= 1'b0;
+        end else begin
+          branch_set_q <= branch_set_d;
+        end
       end
     end
 
@@ -688,7 +701,12 @@ module ibex_id_stage #(
       if (!rst_ni) begin
         branch_taken_q <= 1'b0;
       end else begin
-        branch_taken_q <= branch_decision_i;
+        if (setback_i) begin
+          branch_taken_q <= 1'b0;
+
+        end else begin
+          branch_taken_q <= branch_decision_i;
+        end
       end
     end
 
@@ -718,7 +736,11 @@ module ibex_id_stage #(
     if (!rst_ni) begin
       id_fsm_q            <= FIRST_CYCLE;
     end else begin
-      id_fsm_q            <= id_fsm_d;
+      if (setback_i) begin
+        id_fsm_q            <= FIRST_CYCLE;
+      end else begin
+        id_fsm_q            <= id_fsm_d;
+      end
     end
   end
 

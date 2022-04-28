@@ -3,6 +3,7 @@ module ibex_counter #(
 ) (
   input  logic        clk_i,
   input  logic        rst_ni,
+  input  logic        setback_i,
 
   input  logic        counter_inc_i,
   input  logic        counterh_we_i,
@@ -60,7 +61,11 @@ module ibex_counter #(
     if (!rst_ni) begin
       counter_q <= '0;
     end else begin
-      counter_q <= counter_d;
+      if (setback_i) begin
+        counter_q <= '0;
+      end else begin
+        counter_q <= counter_d;
+      end
     end
   end
 

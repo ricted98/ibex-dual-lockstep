@@ -20,6 +20,7 @@
 module ibex_branch_predict (
   input  logic clk_i,
   input  logic rst_ni,
+  input  logic setback_i,
 
   // Instruction from fetch stage
   input  logic [31:0] fetch_rdata_i,

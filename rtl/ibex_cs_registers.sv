@@ -31,6 +31,7 @@ module ibex_cs_registers #(
     // Clock and Reset
     input  logic                 clk_i,
     input  logic                 rst_ni,
+    input  logic                 setback_i,
 
     // Hart ID
     input  logic [31:0]          hart_id_i,
@@ -715,7 +716,11 @@ module ibex_cs_registers #(
     if (!rst_ni) begin
       priv_lvl_q     <= PRIV_LVL_M;
     end else begin
-      priv_lvl_q     <= priv_lvl_d;
+      if (setback_i) begin
+        priv_lvl_q     <= PRIV_LVL_M;
+      end else begin
+        priv_lvl_q     <= priv_lvl_d;
+      end
     end
   end
 
@@ -787,6 +792,7 @@ module ibex_cs_registers #(
   ) u_mstatus_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  ({mstatus_d}),
     .wr_en_i    (mstatus_en),
     .rd_data_o  (mstatus_q),
@@ -801,6 +807,7 @@ module ibex_cs_registers #(
   ) u_mepc_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (mepc_d),
     .wr_en_i    (mepc_en),
     .rd_data_o  (mepc_q),
@@ -819,6 +826,7 @@ module ibex_cs_registers #(
   ) u_mie_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  ({mie_d}),
     .wr_en_i    (mie_en),
     .rd_data_o  (mie_q),
@@ -833,6 +841,7 @@ module ibex_cs_registers #(
   ) u_mscratch_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (csr_wdata_int),
     .wr_en_i    (mscratch_en),
     .rd_data_o  (mscratch_q),
@@ -847,6 +856,7 @@ module ibex_cs_registers #(
   ) u_mcause_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (mcause_d),
     .wr_en_i    (mcause_en),
     .rd_data_o  (mcause_q),
@@ -861,6 +871,7 @@ module ibex_cs_registers #(
   ) u_mtval_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (mtval_d),
     .wr_en_i    (mtval_en),
     .rd_data_o  (mtval_q),
@@ -875,6 +886,7 @@ module ibex_cs_registers #(
   ) u_mtvec_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (mtvec_d),
     .wr_en_i    (mtvec_en),
     .rd_data_o  (mtvec_q),
@@ -895,6 +907,7 @@ module ibex_cs_registers #(
   ) u_dcsr_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  ({dcsr_d}),
     .wr_en_i    (dcsr_en),
     .rd_data_o  (dcsr_q),
@@ -909,6 +922,7 @@ module ibex_cs_registers #(
   ) u_depc_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (depc_d),
     .wr_en_i    (depc_en),
     .rd_data_o  (depc_q),
@@ -923,6 +937,7 @@ module ibex_cs_registers #(
   ) u_dscratch0_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (csr_wdata_int),
     .wr_en_i    (dscratch0_en),
     .rd_data_o  (dscratch0_q),
@@ -937,6 +952,7 @@ module ibex_cs_registers #(
   ) u_dscratch1_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (csr_wdata_int),
     .wr_en_i    (dscratch1_en),
     .rd_data_o  (dscratch1_q),
@@ -955,6 +971,7 @@ module ibex_cs_registers #(
   ) u_mstack_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  ({mstack_d}),
     .wr_en_i    (mstack_en),
     .rd_data_o  (mstack_q),
@@ -969,6 +986,7 @@ module ibex_cs_registers #(
   ) u_mstack_epc_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (mstack_epc_d),
     .wr_en_i    (mstack_en),
     .rd_data_o  (mstack_epc_q),
@@ -983,6 +1001,7 @@ module ibex_cs_registers #(
   ) u_mstack_cause_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (mstack_cause_d),
     .wr_en_i    (mstack_en),
     .rd_data_o  (mstack_cause_q),
@@ -1077,6 +1096,7 @@ module ibex_cs_registers #(
       ) u_pmp_cfg_csr (
         .clk_i      (clk_i),
         .rst_ni     (rst_ni),
+        .setback_i  (setback_i),
         .wr_data_i  ({pmp_cfg_wdata[i]}),
         .wr_en_i    (pmp_cfg_we[i]),
         .rd_data_o  (pmp_cfg[i]),
@@ -1102,6 +1122,7 @@ module ibex_cs_registers #(
       ) u_pmp_addr_csr (
         .clk_i      (clk_i),
         .rst_ni     (rst_ni),
+        .setback_i  (setback_i),
         .wr_data_i  (csr_wdata_int[31-:PMPAddrWidth]),
         .wr_en_i    (pmp_addr_we[i]),
         .rd_data_o  (pmp_addr[i]),
@@ -1195,6 +1216,7 @@ module ibex_cs_registers #(
   ) mcycle_counter_i (
     .clk_i(clk_i),
     .rst_ni(rst_ni),
+    .setback_i  (setback_i),
     .counter_inc_i(mhpmcounter_incr[0] & ~mcountinhibit[0]),
     .counterh_we_i(mhpmcounterh_we[0]),
     .counter_we_i(mhpmcounter_we[0]),
@@ -1208,6 +1230,7 @@ module ibex_cs_registers #(
   ) minstret_counter_i (
     .clk_i(clk_i),
     .rst_ni(rst_ni),
+    .setback_i  (setback_i),
     .counter_inc_i(mhpmcounter_incr[2] & ~mcountinhibit[2]),
     .counterh_we_i(mhpmcounterh_we[2]),
     .counter_we_i(mhpmcounter_we[2]),
@@ -1228,6 +1251,7 @@ module ibex_cs_registers #(
       ) mcounters_variable_i (
         .clk_i(clk_i),
         .rst_ni(rst_ni),
+        .setback_i  (setback_i),
         .counter_inc_i(mhpmcounter_incr[cnt+3] & ~mcountinhibit[cnt+3]),
         .counterh_we_i(mhpmcounterh_we[cnt+3]),
         .counter_we_i(mhpmcounter_we[cnt+3]),
@@ -1257,7 +1281,11 @@ module ibex_cs_registers #(
     if (!rst_ni) begin
       mcountinhibit_q <= '0;
     end else begin
-      mcountinhibit_q <= mcountinhibit_d;
+      if (setback_i) begin
+        mcountinhibit_q <= '0;
+      end else begin
+        mcountinhibit_q <= mcountinhibit_d;
+      end
     end
   end
 
@@ -1305,6 +1333,7 @@ module ibex_cs_registers #(
     ) u_tselect_csr (
       .clk_i      (clk_i),
       .rst_ni     (rst_ni),
+      .setback_i  (setback_i),
       .wr_data_i  (tselect_d),
       .wr_en_i    (tselect_we),
       .rd_data_o  (tselect_q),
@@ -1319,6 +1348,7 @@ module ibex_cs_registers #(
       ) u_tmatch_control_csr (
         .clk_i      (clk_i),
         .rst_ni     (rst_ni),
+        .setback_i  (setback_i),
         .wr_data_i  (tmatch_control_d),
         .wr_en_i    (tmatch_control_we[i]),
         .rd_data_o  (tmatch_control_q[i]),
@@ -1332,6 +1362,7 @@ module ibex_cs_registers #(
       ) u_tmatch_value_csr (
         .clk_i      (clk_i),
         .rst_ni     (rst_ni),
+        .setback_i  (setback_i),
         .wr_data_i  (tmatch_value_d),
         .wr_en_i    (tmatch_value_we[i]),
         .rd_data_o  (tmatch_value_q[i]),
@@ -1448,6 +1479,7 @@ module ibex_cs_registers #(
   ) u_cpuctrl_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  ({cpuctrl_d}),
     .wr_en_i    (cpuctrl_we),
     .rd_data_o  (cpuctrl_q),
@@ -1468,6 +1500,7 @@ module ibex_cs_registers #(
   ) u_miex_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (csr_wdata_int),
     .wr_en_i    (miex_en),
     .rd_data_o  (miex_q),
@@ -1482,6 +1515,7 @@ module ibex_cs_registers #(
   ) u_mtvecx_csr (
     .clk_i      (clk_i),
     .rst_ni     (rst_ni),
+    .setback_i  (setback_i),
     .wr_data_i  (mtvecx_d),
     .wr_en_i    (mtvecx_en),
     .rd_data_o  (mtvecx_q),

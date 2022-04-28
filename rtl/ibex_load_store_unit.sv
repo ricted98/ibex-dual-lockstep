@@ -17,6 +17,7 @@ module ibex_load_store_unit
 (
     input  logic         clk_i,
     input  logic         rst_ni,
+    input  logic         setback_i,
 
     // data interface
     output logic         data_req_o,
@@ -185,8 +186,14 @@ module ibex_load_store_unit
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       rdata_q <= '0;
-    end else if (rdata_update) begin
-      rdata_q <= data_rdata_i[31:8];
+    end else begin
+      if (setback_i) begin
+        rdata_q <= '0;
+      end else begin
+        if (rdata_update) begin
+          rdata_q <= data_rdata_i[31:8];
+        end
+      end
     end
   end
 
@@ -197,11 +204,20 @@ module ibex_load_store_unit
       data_type_q     <= 2'h0;
       data_sign_ext_q <= 1'b0;
       data_we_q       <= 1'b0;
-    end else if (ctrl_update) begin
-      rdata_offset_q  <= data_offset;
-      data_type_q     <= lsu_type_i;
-      data_sign_ext_q <= lsu_sign_ext_i;
-      data_we_q       <= lsu_we_i;
+    end else begin
+      if (setback_i) begin
+        rdata_offset_q  <= 2'h0;
+        data_type_q     <= 2'h0;
+        data_sign_ext_q <= 1'b0;
+        data_we_q       <= 1'b0;
+      end else begin
+        if (ctrl_update) begin
+          rdata_offset_q  <= data_offset;
+          data_type_q     <= lsu_type_i;
+          data_sign_ext_q <= lsu_sign_ext_i;
+          data_we_q       <= lsu_we_i;
+        end
+      end
     end
   end
 
@@ -210,8 +226,14 @@ module ibex_load_store_unit
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       addr_last_q <= '0;
-    end else if (addr_update) begin
-      addr_last_q <= data_addr;
+    end else begin
+      if (setback_i) begin
+        addr_last_q <= '0;
+      end else begin
+        if (addr_update) begin
+          addr_last_q <= data_addr;
+        end
+      end
     end
   end
 
@@ -458,10 +480,17 @@ module ibex_load_store_unit
       pmp_err_q           <= '0;
       lsu_err_q           <= '0;
     end else begin
-      ls_fsm_cs           <= ls_fsm_ns;
-      handle_misaligned_q <= handle_misaligned_d;
-      pmp_err_q           <= pmp_err_d;
-      lsu_err_q           <= lsu_err_d;
+      if (setback_i) begin
+        ls_fsm_cs           <= IDLE;
+        handle_misaligned_q <= '0;
+        pmp_err_q           <= '0;
+        lsu_err_q           <= '0;
+      end else begin
+        ls_fsm_cs           <= ls_fsm_ns;
+        handle_misaligned_q <= handle_misaligned_d;
+        pmp_err_q           <= pmp_err_d;
+        lsu_err_q           <= lsu_err_d;
+      end
     end
   end
 

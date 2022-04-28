@@ -23,6 +23,7 @@ module ibex_if_stage #(
 ) (
     input  logic                   clk_i,
     input  logic                   rst_ni,
+    input  logic                   setback_i,
 
     input  logic [31:0]            boot_addr_i,              // also used for mtvec
     input  logic                   req_i,                    // instruction request control
@@ -193,6 +194,7 @@ module ibex_if_stage #(
     ) icache_i (
         .clk_i               ( clk_i                      ),
         .rst_ni              ( rst_ni                     ),
+        .setback_i           ( setback_i                  ),
 
         .req_i               ( req_i                      ),
 
@@ -228,6 +230,7 @@ module ibex_if_stage #(
     ) prefetch_buffer_i (
         .clk_i               ( clk_i                      ),
         .rst_ni              ( rst_ni                     ),
+        .setback_i           ( setback_i                  ),
 
         .req_i               ( req_i                      ),
 
@@ -280,6 +283,7 @@ module ibex_if_stage #(
   ibex_compressed_decoder compressed_decoder_i (
       .clk_i           ( clk_i                    ),
       .rst_ni          ( rst_ni                   ),
+      .setback_i       ( setback_i                ),
       .valid_i         ( fetch_valid & ~fetch_err ),
       .instr_i         ( if_instr_rdata           ),
       .instr_o         ( instr_decompressed       ),
@@ -295,6 +299,7 @@ module ibex_if_stage #(
     ibex_dummy_instr dummy_instr_i (
       .clk_i                 ( clk_i                 ),
       .rst_ni                ( rst_ni                ),
+      .setback_i             ( setback_i             ),
       .dummy_instr_en_i      ( dummy_instr_en_i      ),
       .dummy_instr_mask_i    ( dummy_instr_mask_i    ),
       .dummy_instr_seed_en_i ( dummy_instr_seed_en_i ),
@@ -320,8 +325,14 @@ module ibex_if_stage #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         dummy_instr_id_o <= 1'b0;
-      end else if (if_id_pipe_reg_we) begin
-        dummy_instr_id_o <= insert_dummy_instr;
+      end else begin
+        if (setback_i) begin
+          dummy_instr_id_o <= 1'b0;
+        end else begin
+          if (if_id_pipe_reg_we) begin
+            dummy_instr_id_o <= insert_dummy_instr;
+          end
+        end
       end
     end
 
@@ -355,8 +366,13 @@ module ibex_if_stage #(
       instr_valid_id_q <= 1'b0;
       instr_new_id_q   <= 1'b0;
     end else begin
-      instr_valid_id_q <= instr_valid_id_d;
-      instr_new_id_q   <= instr_new_id_d;
+      if (setback_i) begin
+        instr_valid_id_q <= 1'b0;
+        instr_new_id_q   <= 1'b0;
+      end else begin
+        instr_valid_id_q <= instr_valid_id_d;
+        instr_new_id_q   <= instr_new_id_d;
+      end
     end
   end
 
@@ -395,7 +411,11 @@ module ibex_if_stage #(
       if (!rst_ni) begin
         prev_instr_seq_q <= 1'b0;
       end else begin
-        prev_instr_seq_q <= prev_instr_seq_d;
+        if (setback_i) begin
+          prev_instr_seq_q <= 1'b0;
+        end else begin
+          prev_instr_seq_q <= prev_instr_seq_d;
+        end
       end
     end
 
@@ -443,7 +463,11 @@ module ibex_if_stage #(
       if (!rst_ni) begin
         instr_skid_valid_q <= 1'b0;
       end else begin
-        instr_skid_valid_q <= instr_skid_valid_d;
+        if (setback_i) begin
+          instr_skid_valid_q <= 1'b0;
+        end else begin
+          instr_skid_valid_q <= instr_skid_valid_d;
+        end
       end
     end
 
@@ -458,6 +482,7 @@ module ibex_if_stage #(
     ibex_branch_predict branch_predict_i (
       .clk_i                  ( clk_i                    ),
       .rst_ni                 ( rst_ni                   ),
+      .setback_i              ( setback_i                ),
       .fetch_rdata_i          ( fetch_rdata              ),
       .fetch_pc_i             ( fetch_addr               ),
       .fetch_valid_i          ( fetch_valid              ),
@@ -567,8 +592,13 @@ module ibex_if_stage #(
         predicted_branch_live_q <= 1'b0;
         mispredicted_q          <= 1'b0;
       end else begin
-        predicted_branch_live_q <= predicted_branch_live_d;
-        mispredicted_q          <= mispredicted_d;
+        if (setback_i) begin
+          predicted_branch_live_q <= 1'b0;
+          mispredicted_q          <= 1'b0;
+        end else begin
+          predicted_branch_live_q <= predicted_branch_live_d;
+          mispredicted_q          <= mispredicted_d;
+        end
       end
     end
 

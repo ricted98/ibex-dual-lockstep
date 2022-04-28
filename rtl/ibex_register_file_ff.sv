@@ -18,6 +18,7 @@ module ibex_register_file_ff #(
     // Clock and Reset
     input  logic                 clk_i,
     input  logic                 rst_ni,
+    input  logic                 setback_i,
 
     input  logic                 test_en_i,
     input  logic                 dummy_instr_id_i,
@@ -56,8 +57,14 @@ module ibex_register_file_ff #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         rf_reg_q[i] <= '0;
-      end else if(we_a_dec[i]) begin
-        rf_reg_q[i] <= wdata_a_i;
+      end else begin
+        if (setback_i) begin
+          rf_reg_q[i] <= '0;
+        end else begin
+          if(we_a_dec[i]) begin
+            rf_reg_q[i] <= wdata_a_i;
+          end
+        end
       end
     end
   end
@@ -74,8 +81,14 @@ module ibex_register_file_ff #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         rf_r0_q <= '0;
-      end else if (we_r0_dummy) begin
-        rf_r0_q <= wdata_a_i;
+      end else begin
+        if (setback_i) begin
+          rf_r0_q <= '0;
+        end else begin
+          if (we_r0_dummy) begin
+            rf_r0_q <= wdata_a_i;
+          end
+        end
       end
     end
 

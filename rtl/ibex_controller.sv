@@ -15,6 +15,7 @@ module ibex_controller #(
  ) (
     input  logic                  clk_i,
     input  logic                  rst_ni,
+    input  logic                  setback_i,
 
     output logic                  ctrl_busy_o,           // core is busy processing instrs
 
@@ -871,13 +872,23 @@ module ibex_controller #(
       exc_req_q      <= 1'b0;
       illegal_insn_q <= 1'b0;
     end else begin
-      ctrl_fsm_cs    <= ctrl_fsm_ns;
-      nmi_mode_q     <= nmi_mode_d;
-      debug_mode_q   <= debug_mode_d;
-      load_err_q     <= load_err_d;
-      store_err_q    <= store_err_d;
-      exc_req_q      <= exc_req_d;
-      illegal_insn_q <= illegal_insn_d;
+      if (setback_i) begin
+        ctrl_fsm_cs    <= RESET;
+        nmi_mode_q     <= 1'b0;
+        debug_mode_q   <= 1'b0;
+        load_err_q     <= 1'b0;
+        store_err_q    <= 1'b0;
+        exc_req_q      <= 1'b0;
+        illegal_insn_q <= 1'b0;
+      end else begin
+        ctrl_fsm_cs    <= ctrl_fsm_ns;
+        nmi_mode_q     <= nmi_mode_d;
+        debug_mode_q   <= debug_mode_d;
+        load_err_q     <= load_err_d;
+        store_err_q    <= store_err_d;
+        exc_req_q      <= exc_req_d;
+        illegal_insn_q <= illegal_insn_d;
+      end
     end
   end
 

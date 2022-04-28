@@ -12,6 +12,7 @@ module ibex_dummy_instr (
     // Clock and reset
     input  logic        clk_i,
     input  logic        rst_ni,
+    input  logic        setback_i,
 
     // Interface to CSRs
     input  logic        dummy_instr_en_i,
@@ -64,8 +65,14 @@ module ibex_dummy_instr (
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       dummy_instr_seed_q <= '0;
-    end else if (dummy_instr_seed_en_i) begin
-      dummy_instr_seed_q <= dummy_instr_seed_d;
+    end else begin
+      if (setback_i) begin
+        dummy_instr_seed_q <= '0;
+      end else begin
+        if (dummy_instr_seed_en_i) begin
+          dummy_instr_seed_q <= dummy_instr_seed_d;
+        end
+      end
     end
   end
 
@@ -75,6 +82,7 @@ module ibex_dummy_instr (
   ) lfsr_i (
       .clk_i     ( clk_i                 ),
       .rst_ni    ( rst_ni                ),
+      .setback_i ( setback_i             ),
       .seed_en_i ( dummy_instr_seed_en_i ),
       .seed_i    ( dummy_instr_seed_d    ),
       .lfsr_en_i ( lfsr_en               ),
@@ -99,8 +107,14 @@ module ibex_dummy_instr (
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       dummy_cnt_q <= '0;
-    end else if (dummy_cnt_en) begin
-      dummy_cnt_q <= dummy_cnt_d;
+    end else begin
+      if (setback_i) begin
+        dummy_cnt_q <= '0;
+      end else begin
+        if (dummy_cnt_en) begin
+          dummy_cnt_q <= dummy_cnt_d;
+        end
+      end
     end
   end
 

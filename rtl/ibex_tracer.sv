@@ -37,6 +37,7 @@
 module ibex_tracer (
   input logic        clk_i,
   input logic        rst_ni,
+  input logic        setback_i,
 
   input logic [31:0] hart_id_i,
 
@@ -732,7 +733,11 @@ module ibex_tracer (
     if (!rst_ni) begin
       cycle <= 0;
     end else begin
-      cycle <= cycle + 1;
+      if (setback_i) begin
+        cycle <= 0;
+      end else begin
+        cycle <= cycle + 1;
+      end
     end
   end
 

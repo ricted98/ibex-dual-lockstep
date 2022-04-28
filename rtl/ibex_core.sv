@@ -36,6 +36,7 @@ module ibex_core #(
     // Clock and Reset
     input  logic        clk_i,
     input  logic        rst_ni,
+    input  logic        setback_i,     // synchronous "reset" signal
 
     input  logic        test_en_i,     // enable all clock gates for testing
 
@@ -375,7 +376,11 @@ module ibex_core #(
     if (!rst_ni) begin
       core_busy_q <= 1'b0;
     end else begin
-      core_busy_q <= core_busy_d;
+      if (setback_i) begin
+        core_busy_q <= 1'b0;
+      end else begin
+        core_busy_q <= core_busy_d;
+      end
     end
   end
   // capture fetch_enable_i in fetch_enable_q, once for ever
@@ -383,12 +388,18 @@ module ibex_core #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       fetch_enable_q <= 1'b0;
-    end else if (fetch_enable_i) begin
-      fetch_enable_q <= 1'b1;
+    end else begin
+      if (setback_i) begin
+        fetch_enable_q <= 1'b0;
+      end else begin
+        if (fetch_enable_i) begin
+          fetch_enable_q <= 1'b1;
+        end
+      end
     end
   end
 
-  assign clock_en     = fetch_enable_q & (core_busy_q | debug_req_i | irq_pending | irq_nm_i);
+  assign clock_en     = fetch_enable_q & (core_busy_q | debug_req_i | irq_pending | irq_nm_i | setback_i);
   assign core_sleep_o = ~clock_en;
 
   // main clock gate of the core
@@ -416,6 +427,7 @@ module ibex_core #(
   ) if_stage_i (
       .clk_i                    ( clk                    ),
       .rst_ni                   ( rst_ni                 ),
+      .setback_i                ( setback_i              ),
 
       .boot_addr_i              ( boot_addr_i            ),
       .req_i                    ( instr_req_int          ), // instruction request control
@@ -499,6 +511,7 @@ module ibex_core #(
   ) id_stage_i (
       .clk_i                        ( clk                      ),
       .rst_ni                       ( rst_ni                   ),
+      .setback_i                    ( setback_i                ),
 
       // Processor Enable
       .ctrl_busy_o                  ( ctrl_busy                ),
@@ -656,6 +669,7 @@ module ibex_core #(
   ) ex_block_i (
       .clk_i                    ( clk                      ),
       .rst_ni                   ( rst_ni                   ),
+      .setback_i                ( setback_i                ),
 
       // ALU signal from ID stage
       .alu_operator_i           ( alu_operator_ex          ),
@@ -704,6 +718,7 @@ module ibex_core #(
   ibex_load_store_unit load_store_unit_i (
       .clk_i                 ( clk                 ),
       .rst_ni                ( rst_ni              ),
+      .setback_i             ( setback_i           ),
 
       // data interface
       .data_req_o            ( data_req_out        ),
@@ -752,6 +767,7 @@ module ibex_core #(
   ) wb_stage_i (
     .clk_i                          ( clk                          ),
     .rst_ni                         ( rst_ni                       ),
+    .setback_i                      ( setback_i                    ),
     .en_wb_i                        ( en_wb                        ),
     .instr_type_wb_i                ( instr_type_wb                ),
     .pc_id_i                        ( pc_id                        ),
@@ -852,6 +868,7 @@ module ibex_core #(
     ) register_file_i (
         .clk_i            ( clk_i           ),
         .rst_ni           ( rst_ni          ),
+        .setback_i        ( setback_i       ),
 
         .test_en_i        ( test_en_i       ),
         .dummy_instr_id_i ( dummy_instr_id  ),
@@ -872,6 +889,7 @@ module ibex_core #(
     ) register_file_i (
         .clk_i            ( clk_i           ),
         .rst_ni           ( rst_ni          ),
+        .setback_i        ( setback_i       ),
 
         .test_en_i        ( test_en_i       ),
         .dummy_instr_id_i ( dummy_instr_id  ),
@@ -892,6 +910,7 @@ module ibex_core #(
     ) register_file_i (
         .clk_i            ( clk_i           ),
         .rst_ni           ( rst_ni          ),
+        .setback_i        ( setback_i       ),
 
         .test_en_i        ( test_en_i       ),
         .dummy_instr_id_i ( dummy_instr_id  ),
@@ -994,6 +1013,7 @@ module ibex_core #(
   ) cs_registers_i (
       .clk_i                   ( clk                          ),
       .rst_ni                  ( rst_ni                       ),
+      .setback_i               ( setback_i                    ),
 
       // Hart ID from outside
       .hart_id_i               ( hart_id_i                    ),
@@ -1108,6 +1128,7 @@ module ibex_core #(
     ) pmp_i (
         .clk_i                 ( clk            ),
         .rst_ni                ( rst_ni         ),
+        .setback_i             ( setback_i      ),
         // Interface to CSRs
         .csr_pmp_cfg_i         ( csr_pmp_cfg    ),
         .csr_pmp_addr_i        ( csr_pmp_addr   ),
@@ -1215,7 +1236,11 @@ module ibex_core #(
       if (~rst_ni) begin
         rvfi_instr_new_wb_q <= 0;
       end else begin
-        rvfi_instr_new_wb_q <= instr_id_done;
+        if (setback_i) begin
+          rvfi_instr_new_wb_q <= 0;
+        end else begin
+          rvfi_instr_new_wb_q <= instr_id_done;
+        end
       end
     end
   end else begin : gen_rvfi_no_wb_stage
@@ -1254,62 +1279,88 @@ module ibex_core #(
         rvfi_stage_mem_wdata[i] <= '0;
         rvfi_stage_mem_addr[i]  <= '0;
       end else begin
-        rvfi_stage_valid[i] <= rvfi_stage_valid_d[i];
-
-        if (i == 0) begin
-          if(instr_id_done) begin
-            rvfi_stage_halt[i]      <= '0;
-            rvfi_stage_trap[i]      <= illegal_insn_id;
-            rvfi_stage_intr[i]      <= rvfi_intr_d;
-            rvfi_stage_order[i]     <= rvfi_stage_order[i] + 64'(rvfi_stage_valid_d[i]);
-            rvfi_stage_insn[i]      <= rvfi_insn_id;
-            rvfi_stage_mode[i]      <= {priv_mode_id};
-            rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
-            rvfi_stage_rs1_addr[i]  <= rvfi_rs1_addr_d;
-            rvfi_stage_rs2_addr[i]  <= rvfi_rs2_addr_d;
-            rvfi_stage_rs3_addr[i]  <= rvfi_rs3_addr_d;
-            rvfi_stage_pc_rdata[i]  <= pc_id;
-            rvfi_stage_pc_wdata[i]  <= pc_set ? branch_target_ex : pc_if;
-            rvfi_stage_mem_rmask[i] <= rvfi_mem_mask_int;
-            rvfi_stage_mem_wmask[i] <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
-            rvfi_stage_rs1_rdata[i] <= rvfi_rs1_data_d;
-            rvfi_stage_rs2_rdata[i] <= rvfi_rs2_data_d;
-            rvfi_stage_rs3_rdata[i] <= rvfi_rs3_data_d;
-            rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
-            rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
-            rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
-            rvfi_stage_mem_wdata[i] <= rvfi_mem_wdata_d;
-            rvfi_stage_mem_addr[i]  <= rvfi_mem_addr_d;
-          end
+        if (setback_i) begin
+          rvfi_stage_halt[i]      <= '0;
+          rvfi_stage_trap[i]      <= '0;
+          rvfi_stage_intr[i]      <= '0;
+          rvfi_stage_order[i]     <= '0;
+          rvfi_stage_insn[i]      <= '0;
+          rvfi_stage_mode[i]      <= {PRIV_LVL_M};
+          rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
+          rvfi_stage_rs1_addr[i]  <= '0;
+          rvfi_stage_rs2_addr[i]  <= '0;
+          rvfi_stage_rs3_addr[i]  <= '0;
+          rvfi_stage_pc_rdata[i]  <= '0;
+          rvfi_stage_pc_wdata[i]  <= '0;
+          rvfi_stage_mem_rmask[i] <= '0;
+          rvfi_stage_mem_wmask[i] <= '0;
+          rvfi_stage_valid[i]     <= '0;
+          rvfi_stage_rs1_rdata[i] <= '0;
+          rvfi_stage_rs2_rdata[i] <= '0;
+          rvfi_stage_rs3_rdata[i] <= '0;
+          rvfi_stage_rd_wdata[i]  <= '0;
+          rvfi_stage_rd_addr[i]   <= '0;
+          rvfi_stage_mem_rdata[i] <= '0;
+          rvfi_stage_mem_wdata[i] <= '0;
+          rvfi_stage_mem_addr[i]  <= '0;
         end else begin
-          if(instr_done_wb) begin
-            rvfi_stage_halt[i]      <= rvfi_stage_halt[i-1];
-            rvfi_stage_trap[i]      <= rvfi_stage_trap[i-1];
-            rvfi_stage_intr[i]      <= rvfi_stage_intr[i-1];
-            rvfi_stage_order[i]     <= rvfi_stage_order[i-1];
-            rvfi_stage_insn[i]      <= rvfi_stage_insn[i-1];
-            rvfi_stage_mode[i]      <= rvfi_stage_mode[i-1];
-            rvfi_stage_ixl[i]       <= rvfi_stage_ixl[i-1];
-            rvfi_stage_rs1_addr[i]  <= rvfi_stage_rs1_addr[i-1];
-            rvfi_stage_rs2_addr[i]  <= rvfi_stage_rs2_addr[i-1];
-            rvfi_stage_rs3_addr[i]  <= rvfi_stage_rs3_addr[i-1];
-            rvfi_stage_pc_rdata[i]  <= rvfi_stage_pc_rdata[i-1];
-            rvfi_stage_pc_wdata[i]  <= rvfi_stage_pc_wdata[i-1];
-            rvfi_stage_mem_rmask[i] <= rvfi_stage_mem_rmask[i-1];
-            rvfi_stage_mem_wmask[i] <= rvfi_stage_mem_wmask[i-1];
-            rvfi_stage_rs1_rdata[i] <= rvfi_stage_rs1_rdata[i-1];
-            rvfi_stage_rs2_rdata[i] <= rvfi_stage_rs2_rdata[i-1];
-            rvfi_stage_rs3_rdata[i] <= rvfi_stage_rs3_rdata[i-1];
-            rvfi_stage_mem_wdata[i] <= rvfi_stage_mem_wdata[i-1];
-            rvfi_stage_mem_addr[i]  <= rvfi_stage_mem_addr[i-1];
+          rvfi_stage_valid[i] <= rvfi_stage_valid_d[i];
 
-            // For 2 RVFI_STAGES/Writeback Stage ignore first stage flops for rd_addr, rd_wdata and
-            // mem_rdata. For RF write addr/data actual write happens in writeback so capture
-            // address/data there. For mem_rdata that is only available from the writeback stage.
-            // Previous stage flops still exist in RTL as they are used by the non writeback config
-            rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
-            rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
-            rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
+          if (i == 0) begin
+            if(instr_id_done) begin
+              rvfi_stage_halt[i]      <= '0;
+              rvfi_stage_trap[i]      <= illegal_insn_id;
+              rvfi_stage_intr[i]      <= rvfi_intr_d;
+              rvfi_stage_order[i]     <= rvfi_stage_order[i] + 64'(rvfi_stage_valid_d[i]);
+              rvfi_stage_insn[i]      <= rvfi_insn_id;
+              rvfi_stage_mode[i]      <= {priv_mode_id};
+              rvfi_stage_ixl[i]       <= CSR_MISA_MXL;
+              rvfi_stage_rs1_addr[i]  <= rvfi_rs1_addr_d;
+              rvfi_stage_rs2_addr[i]  <= rvfi_rs2_addr_d;
+              rvfi_stage_rs3_addr[i]  <= rvfi_rs3_addr_d;
+              rvfi_stage_pc_rdata[i]  <= pc_id;
+              rvfi_stage_pc_wdata[i]  <= pc_set ? branch_target_ex : pc_if;
+              rvfi_stage_mem_rmask[i] <= rvfi_mem_mask_int;
+              rvfi_stage_mem_wmask[i] <= data_we_o ? rvfi_mem_mask_int : 4'b0000;
+              rvfi_stage_rs1_rdata[i] <= rvfi_rs1_data_d;
+              rvfi_stage_rs2_rdata[i] <= rvfi_rs2_data_d;
+              rvfi_stage_rs3_rdata[i] <= rvfi_rs3_data_d;
+              rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
+              rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
+              rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
+              rvfi_stage_mem_wdata[i] <= rvfi_mem_wdata_d;
+              rvfi_stage_mem_addr[i]  <= rvfi_mem_addr_d;
+            end
+          end else begin
+            if(instr_done_wb) begin
+              rvfi_stage_halt[i]      <= rvfi_stage_halt[i-1];
+              rvfi_stage_trap[i]      <= rvfi_stage_trap[i-1];
+              rvfi_stage_intr[i]      <= rvfi_stage_intr[i-1];
+              rvfi_stage_order[i]     <= rvfi_stage_order[i-1];
+              rvfi_stage_insn[i]      <= rvfi_stage_insn[i-1];
+              rvfi_stage_mode[i]      <= rvfi_stage_mode[i-1];
+              rvfi_stage_ixl[i]       <= rvfi_stage_ixl[i-1];
+              rvfi_stage_rs1_addr[i]  <= rvfi_stage_rs1_addr[i-1];
+              rvfi_stage_rs2_addr[i]  <= rvfi_stage_rs2_addr[i-1];
+              rvfi_stage_rs3_addr[i]  <= rvfi_stage_rs3_addr[i-1];
+              rvfi_stage_pc_rdata[i]  <= rvfi_stage_pc_rdata[i-1];
+              rvfi_stage_pc_wdata[i]  <= rvfi_stage_pc_wdata[i-1];
+              rvfi_stage_mem_rmask[i] <= rvfi_stage_mem_rmask[i-1];
+              rvfi_stage_mem_wmask[i] <= rvfi_stage_mem_wmask[i-1];
+              rvfi_stage_rs1_rdata[i] <= rvfi_stage_rs1_rdata[i-1];
+              rvfi_stage_rs2_rdata[i] <= rvfi_stage_rs2_rdata[i-1];
+              rvfi_stage_rs3_rdata[i] <= rvfi_stage_rs3_rdata[i-1];
+              rvfi_stage_mem_wdata[i] <= rvfi_stage_mem_wdata[i-1];
+              rvfi_stage_mem_addr[i]  <= rvfi_stage_mem_addr[i-1];
+
+              // For 2 RVFI_STAGES/Writeback Stage ignore first stage flops for rd_addr, rd_wdata and
+              // mem_rdata. For RF write addr/data actual write happens in writeback so capture
+              // address/data there. For mem_rdata that is only available from the writeback stage.
+              // Previous stage flops still exist in RTL as they are used by the non writeback config
+              rvfi_stage_rd_addr[i]   <= rvfi_rd_addr_d;
+              rvfi_stage_rd_wdata[i]  <= rvfi_rd_wdata_d;
+              rvfi_stage_mem_rdata[i] <= rvfi_mem_rdata_d;
+            end
           end
         end
       end
@@ -1343,9 +1394,15 @@ module ibex_core #(
       rvfi_mem_rdata_q <= '0;
       rvfi_mem_wdata_q <= '0;
     end else begin
-      rvfi_mem_addr_q  <= rvfi_mem_addr_d;
-      rvfi_mem_rdata_q <= rvfi_mem_rdata_d;
-      rvfi_mem_wdata_q <= rvfi_mem_wdata_d;
+      if (setback_i) begin
+        rvfi_mem_addr_q  <= '0;
+        rvfi_mem_rdata_q <= '0;
+        rvfi_mem_wdata_q <= '0;
+      end else begin
+        rvfi_mem_addr_q  <= rvfi_mem_addr_d;
+        rvfi_mem_rdata_q <= rvfi_mem_rdata_d;
+        rvfi_mem_wdata_q <= rvfi_mem_wdata_d;
+      end
     end
   end
   // Byte enable based on data type
@@ -1391,12 +1448,18 @@ module ibex_core #(
       rvfi_rs1_addr_q <= '0;
       rvfi_rs2_data_q <= '0;
       rvfi_rs2_addr_q <= '0;
-
     end else begin
-      rvfi_rs1_data_q <= rvfi_rs1_data_d;
-      rvfi_rs1_addr_q <= rvfi_rs1_addr_d;
-      rvfi_rs2_data_q <= rvfi_rs2_data_d;
-      rvfi_rs2_addr_q <= rvfi_rs2_addr_d;
+      if (setback_i) begin
+        rvfi_rs1_data_q <= '0;
+        rvfi_rs1_addr_q <= '0;
+        rvfi_rs2_data_q <= '0;
+        rvfi_rs2_addr_q <= '0;
+      end else begin
+        rvfi_rs1_data_q <= rvfi_rs1_data_d;
+        rvfi_rs1_addr_q <= rvfi_rs1_addr_d;
+        rvfi_rs2_data_q <= rvfi_rs2_data_d;
+        rvfi_rs2_addr_q <= rvfi_rs2_addr_d;
+      end
     end
   end
 
@@ -1429,8 +1492,13 @@ module ibex_core #(
       rvfi_rd_addr_q    <= '0;
       rvfi_rd_wdata_q   <= '0;
     end else begin
-      rvfi_rd_addr_q    <= rvfi_rd_addr_d;
-      rvfi_rd_wdata_q   <= rvfi_rd_wdata_d;
+      if (setback_i) begin
+        rvfi_rd_addr_q    <= '0;
+        rvfi_rd_wdata_q   <= '0;
+      end else begin
+        rvfi_rd_addr_q    <= rvfi_rd_addr_d;
+        rvfi_rd_wdata_q   <= rvfi_rd_wdata_d;
+      end
     end
   end
 
@@ -1457,8 +1525,13 @@ module ibex_core #(
       rvfi_set_trap_pc_q <= 1'b0;
       rvfi_intr_q        <= 1'b0;
     end else begin
-      rvfi_set_trap_pc_q <= rvfi_set_trap_pc_d;
-      rvfi_intr_q        <= rvfi_intr_d;
+      if (setback_i) begin
+        rvfi_set_trap_pc_q <= 1'b0;
+        rvfi_intr_q        <= 1'b0;
+      end else begin
+        rvfi_set_trap_pc_q <= rvfi_set_trap_pc_d;
+        rvfi_intr_q        <= rvfi_intr_d;
+      end
     end
   end
 

@@ -15,6 +15,7 @@ module ibex_multdiv_slow
 (
     input  logic             clk_i,
     input  logic             rst_ni,
+    input  logic             setback_i,
     input  logic             mult_en_i,  // dynamic enable signal, for FSM control
     input  logic             div_en_i,   // dynamic enable signal, for FSM control
     input  logic             mult_sel_i, // static decoder output, for data muxes
@@ -336,12 +337,22 @@ module ibex_multdiv_slow
       op_a_shift_q     <= 33'h0;
       md_state_q       <= MD_IDLE;
       div_by_zero_q    <= 1'b0;
-    end else if (multdiv_en) begin
-      multdiv_count_q  <= multdiv_count_d;
-      op_b_shift_q     <= op_b_shift_d;
-      op_a_shift_q     <= op_a_shift_d;
-      md_state_q       <= md_state_d;
-      div_by_zero_q    <= div_by_zero_d;
+    end else begin
+      if (setback_i) begin
+        multdiv_count_q  <= 5'h0;
+        op_b_shift_q     <= 33'h0;
+        op_a_shift_q     <= 33'h0;
+        md_state_q       <= MD_IDLE;
+        div_by_zero_q    <= 1'b0;
+      end else begin
+        if (multdiv_en) begin
+          multdiv_count_q  <= multdiv_count_d;
+          op_b_shift_q     <= op_b_shift_d;
+          op_a_shift_q     <= op_a_shift_d;
+          md_state_q       <= md_state_d;
+          div_by_zero_q    <= div_by_zero_d;
+        end
+      end
     end
   end
 

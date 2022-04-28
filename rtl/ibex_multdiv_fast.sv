@@ -19,6 +19,7 @@ module ibex_multdiv_fast #(
   ) (
     input  logic             clk_i,
     input  logic             rst_ni,
+    input  logic             setback_i,
     input  logic             mult_en_i,  // dynamic enable signal, for FSM control
     input  logic             div_en_i,   // dynamic enable signal, for FSM control
     input  logic             mult_sel_i, // static decoder output, for data muxes
@@ -102,12 +103,22 @@ module ibex_multdiv_fast #(
       op_numerator_q   <= '0;
       op_quotient_q    <= '0;
       div_by_zero_q    <= '0;
-    end else if (div_en_internal) begin
-      div_counter_q    <= div_counter_d;
-      op_numerator_q   <= op_numerator_d;
-      op_quotient_q    <= op_quotient_d;
-      md_state_q       <= md_state_d;
-      div_by_zero_q    <= div_by_zero_d;
+    end else begin
+      if (setback_i) begin
+        div_counter_q    <= '0;
+        md_state_q       <= MD_IDLE;
+        op_numerator_q   <= '0;
+        op_quotient_q    <= '0;
+        div_by_zero_q    <= '0;
+      end else begin
+        if (div_en_internal) begin
+          div_counter_q    <= div_counter_d;
+          op_numerator_q   <= op_numerator_d;
+          op_quotient_q    <= op_quotient_d;
+          md_state_q       <= md_state_d;
+          div_by_zero_q    <= div_by_zero_d;
+        end
+      end
     end
   end
 
@@ -243,8 +254,12 @@ module ibex_multdiv_fast #(
       if (!rst_ni) begin
         mult_state_q <= MULL;
       end else begin
-        if (mult_en_internal) begin
-          mult_state_q <= mult_state_d;
+        if (setback_i) begin
+          mult_state_q <= MULL;
+        end else begin
+          if (mult_en_internal) begin
+            mult_state_q <= mult_state_d;
+          end
         end
       end
     end
@@ -363,8 +378,12 @@ module ibex_multdiv_fast #(
       if (!rst_ni) begin
         mult_state_q <= ALBL;
       end else begin
-        if (mult_en_internal) begin
-          mult_state_q <= mult_state_d;
+        if (setback_i) begin
+          mult_state_q <= ALBL;
+        end else begin
+          if (mult_en_internal) begin
+            mult_state_q <= mult_state_d;
+          end
         end
       end
     end

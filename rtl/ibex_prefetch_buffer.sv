@@ -14,6 +14,7 @@ module ibex_prefetch_buffer #(
 ) (
     input  logic        clk_i,
     input  logic        rst_ni,
+    input  logic        setback_i,
 
     input  logic        req_i,
 
@@ -113,6 +114,7 @@ module ibex_prefetch_buffer #(
   ) fifo_i (
       .clk_i                 ( clk_i             ),
       .rst_ni                ( rst_ni            ),
+      .setback_i             ( setback_i         ),
 
       .clear_i               ( fifo_clear        ),
       .busy_o                ( fifo_busy         ),
@@ -300,11 +302,19 @@ module ibex_prefetch_buffer #(
       branch_discard_q     <= 'b0;
       rdata_pmp_err_q      <= 'b0;
     end else begin
-      valid_req_q          <= valid_req_d;
-      discard_req_q        <= discard_req_d;
-      rdata_outstanding_q  <= rdata_outstanding_s;
-      branch_discard_q     <= branch_discard_s;
-      rdata_pmp_err_q      <= rdata_pmp_err_s;
+      if (setback_i) begin
+        valid_req_q          <= 1'b0;
+        discard_req_q        <= 1'b0;
+        rdata_outstanding_q  <= 'b0;
+        branch_discard_q     <= 'b0;
+        rdata_pmp_err_q      <= 'b0;
+      end else begin
+        valid_req_q          <= valid_req_d;
+        discard_req_q        <= discard_req_d;
+        rdata_outstanding_q  <= rdata_outstanding_s;
+        branch_discard_q     <= branch_discard_s;
+        rdata_pmp_err_q      <= rdata_pmp_err_s;
+      end
     end
   end
 

@@ -18,6 +18,7 @@ module ibex_wb_stage #(
 ) (
   input  logic                     clk_i,
   input  logic                     rst_ni,
+  input  logic                     setback_i,
 
   input  logic                     en_wb_i,
   input  ibex_pkg::wb_instr_type_e instr_type_wb_i,
@@ -87,7 +88,11 @@ module ibex_wb_stage #(
       if(~rst_ni) begin
         wb_valid_q <= 1'b0;
       end else begin
-        wb_valid_q <= wb_valid_d;
+        if (setback_i) begin
+          wb_valid_q <= 1'b0;
+        end else begin
+          wb_valid_q <= wb_valid_d;
+        end
       end
     end
 

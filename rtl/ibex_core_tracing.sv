@@ -30,6 +30,7 @@ module ibex_core_tracing #(
     // Clock and Reset
     input  logic        clk_i,
     input  logic        rst_ni,
+    input  logic        setback_i,
 
     input  logic        test_en_i,     // enable all clock gates for testing
 
@@ -132,6 +133,7 @@ module ibex_core_tracing #(
   ) u_ibex_core (
     .clk_i,
     .rst_ni,
+    .setback_i,
 
     .test_en_i,
 
@@ -202,6 +204,7 @@ module ibex_core_tracing #(
   u_ibex_tracer (
     .clk_i,
     .rst_ni,
+    .setback_i,
 
     .hart_id_i,
 

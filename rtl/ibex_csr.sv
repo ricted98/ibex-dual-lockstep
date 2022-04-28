@@ -15,6 +15,7 @@ module ibex_csr #(
  ) (
     input  logic             clk_i,
     input  logic             rst_ni,
+    input  logic             setback_i,
 
     input  logic [Width-1:0] wr_data_i,
     input  logic             wr_en_i,
@@ -28,8 +29,14 @@ module ibex_csr #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       rdata_q <= ResetValue;
-    end else if (wr_en_i) begin
-      rdata_q <= wr_data_i;
+    end else begin
+      if (setback_i) begin
+        rdata_q <= ResetValue;
+      end else begin
+        if (wr_en_i) begin
+          rdata_q <= wr_data_i;
+        end
+      end
     end
   end
 
@@ -41,8 +48,14 @@ module ibex_csr #(
     always_ff @(posedge clk_i or negedge rst_ni) begin
       if (!rst_ni) begin
         shadow_q <= ~ResetValue;
-      end else if (wr_en_i) begin
-        shadow_q <= ~wr_data_i;
+      end else begin
+        if (setback_i) begin
+          shadow_q <= ~ResetValue;
+        end else begin
+          if (wr_en_i) begin
+            shadow_q <= ~wr_data_i;
+          end
+        end
       end
     end
 

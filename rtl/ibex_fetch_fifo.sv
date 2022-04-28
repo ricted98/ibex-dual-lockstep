@@ -17,6 +17,7 @@ module ibex_fetch_fifo #(
 ) (
     input  logic                clk_i,
     input  logic                rst_ni,
+    input  logic                setback_i,
 
     // control signals
     input  logic                clear_i,   // clears the contents of the FIFO
@@ -222,7 +223,11 @@ module ibex_fetch_fifo #(
     if (!rst_ni) begin
       valid_q <= '0;
     end else begin
-      valid_q <= valid_d;
+      if (setback_i) begin
+        valid_q <= '0;
+      end else begin
+        valid_q <= valid_d;
+      end
     end
   end
 

@@ -14,6 +14,7 @@ module ibex_pmp #(
     // Clock and Reset
     input  logic                    clk_i,
     input  logic                    rst_ni,
+    input  logic                    setback_i,
 
     // Interface to CSRs
     input  ibex_pkg::pmp_cfg_t      csr_pmp_cfg_i  [PMPNumRegions],

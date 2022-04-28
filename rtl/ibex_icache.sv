@@ -24,6 +24,7 @@ module ibex_icache #(
     // Clock and reset
     input  logic                clk_i,
     input  logic                rst_ni,
+    input  logic                setback_i,
 
     // Signal that the core would like instructions
     input  logic                req_i,
@@ -364,7 +365,11 @@ module ibex_icache #(
     if (!rst_ni) begin
       lookup_valid_ic1 <= 1'b0;
     end else begin
-      lookup_valid_ic1 <= lookup_actual_ic0;
+      if (setback_i) begin
+        lookup_valid_ic1 <= 1'b0;
+      end else begin
+        lookup_valid_ic1 <= lookup_actual_ic0;
+      end
     end
   end
 
@@ -411,8 +416,14 @@ module ibex_icache #(
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
       round_robin_way_q <= {{NumWays-1{1'b0}},1'b1};
-    end else if (lookup_valid_ic1) begin
-      round_robin_way_q <= round_robin_way_ic1;
+    end else begin
+      if (setback_i) begin
+        round_robin_way_q <= {{NumWays-1{1'b0}},1'b1};
+      end else begin
+        if (lookup_valid_ic1) begin
+          round_robin_way_q <= round_robin_way_ic1;
+        end
+      end
     end
   end
 
@@ -469,7 +480,11 @@ module ibex_icache #(
       if (!rst_ni) begin
         ecc_correction_write_q <= 1'b0;
       end else begin
-        ecc_correction_write_q <= ecc_correction_write_d;
+        if (setback_i) begin
+          ecc_correction_write_q <= 1'b0;
+        end else begin
+          ecc_correction_write_q <= ecc_correction_write_d;
+        end
       end
     end
 
@@ -519,7 +534,11 @@ module ibex_icache #(
       if (!rst_ni) begin
         cache_cnt_q <= '0;
       end else begin
-        cache_cnt_q <= cache_cnt_d;
+        if (setback_i) begin
+          cache_cnt_q <= '0;
+        end else begin
+          cache_cnt_q <= cache_cnt_d;
+        end
       end
     end
 
@@ -746,18 +765,34 @@ module ibex_icache #(
         fill_rvd_cnt_q[fb]  <= '0;
         fill_ram_done_q[fb] <= 1'b0;
         fill_out_cnt_q[fb]  <= '0;
-      end else if (fill_entry_en[fb]) begin
-        fill_busy_q[fb]     <= fill_busy_d[fb];
-        fill_older_q[fb]    <= fill_older_d[fb];
-        fill_stale_q[fb]    <= fill_stale_d[fb];
-        fill_cache_q[fb]    <= fill_cache_d[fb];
-        fill_hit_q[fb]      <= fill_hit_d[fb];
-        fill_ext_cnt_q[fb]  <= fill_ext_cnt_d[fb];
-        fill_ext_hold_q[fb] <= fill_ext_hold_d[fb];
-        fill_ext_done_q[fb] <= fill_ext_done_d[fb];
-        fill_rvd_cnt_q[fb]  <= fill_rvd_cnt_d[fb];
-        fill_ram_done_q[fb] <= fill_ram_done_d[fb];
-        fill_out_cnt_q[fb]  <= fill_out_cnt_d[fb];
+      end else begin
+        if (setback_i) begin
+          fill_busy_q[fb]     <= 1'b0;
+          fill_older_q[fb]    <= '0;
+          fill_stale_q[fb]    <= 1'b0;
+          fill_cache_q[fb]    <= 1'b0;
+          fill_hit_q[fb]      <= 1'b0;
+          fill_ext_cnt_q[fb]  <= '0;
+          fill_ext_hold_q[fb] <= 1'b0;
+          fill_ext_done_q[fb] <= 1'b0;
+          fill_rvd_cnt_q[fb]  <= '0;
+          fill_ram_done_q[fb] <= 1'b0;
+          fill_out_cnt_q[fb]  <= '0;
+        end else begin
+          if (fill_entry_en[fb]) begin
+            fill_busy_q[fb]     <= fill_busy_d[fb];
+            fill_older_q[fb]    <= fill_older_d[fb];
+            fill_stale_q[fb]    <= fill_stale_d[fb];
+            fill_cache_q[fb]    <= fill_cache_d[fb];
+            fill_hit_q[fb]      <= fill_hit_d[fb];
+            fill_ext_cnt_q[fb]  <= fill_ext_cnt_d[fb];
+            fill_ext_hold_q[fb] <= fill_ext_hold_d[fb];
+            fill_ext_done_q[fb] <= fill_ext_done_d[fb];
+            fill_rvd_cnt_q[fb]  <= fill_rvd_cnt_d[fb];
+            fill_ram_done_q[fb] <= fill_ram_done_d[fb];
+            fill_out_cnt_q[fb]  <= fill_out_cnt_d[fb];
+          end
+        end
       end
     end
 
@@ -802,8 +837,14 @@ module ibex_icache #(
       always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
           fill_err_q[fb][b] <= '0;
-        end else if (fill_entry_en[fb]) begin
-          fill_err_q[fb][b] <= fill_err_d[fb][b];
+        end else begin
+          if (setback_i) begin
+            fill_err_q[fb][b] <= '0;
+          end else begin
+            if (fill_entry_en[fb]) begin
+              fill_err_q[fb][b] <= fill_err_d[fb][b];
+            end
+          end
         end
       end
 
@@ -945,7 +986,11 @@ module ibex_icache #(
     if (!rst_ni) begin
       skid_valid_q <= 1'b0;
     end else begin
-      skid_valid_q <= skid_valid_d;
+      if (setback_i) begin
+        skid_valid_q <= 1'b0;
+      end else begin
+        skid_valid_q <= skid_valid_d;
+      end
     end
   end
 
@@ -1032,8 +1077,13 @@ module ibex_icache #(
       inval_prog_q  <= 1'b0;
       reset_inval_q <= 1'b0;
     end else begin
-      inval_prog_q  <= inval_prog_d;
-      reset_inval_q <= 1'b1;
+      if (setback_i) begin
+        inval_prog_q  <= 1'b0;
+        reset_inval_q <= 1'b0;
+      end else begin
+        inval_prog_q  <= inval_prog_d;
+        reset_inval_q <= 1'b1;
+      end
     end
   end
 

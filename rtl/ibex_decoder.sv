@@ -21,6 +21,7 @@ module ibex_decoder #(
 ) (
     input  logic                 clk_i,
     input  logic                 rst_ni,
+    input  logic                 setback_i,
 
     // to/from controller
     output logic                 illegal_insn_o,        // illegal instr encountered
@@ -147,7 +148,11 @@ module ibex_decoder #(
       if (!rst_ni) begin
         use_rs3_q <= 1'b0;
       end else begin
-        use_rs3_q <= use_rs3_d;
+        if (setback_i) begin
+          use_rs3_q <= 1'b0;
+        end else begin
+          use_rs3_q <= use_rs3_d;
+        end
       end
     end
   end else begin : gen_no_rs3_flop

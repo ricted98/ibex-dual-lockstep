@@ -19,6 +19,7 @@ module ibex_register_file_fpga #(
   // Clock and Reset
   input  logic                 clk_i,
   input  logic                 rst_ni,
+  input  logic                 setback_i,
 
   input  logic                 test_en_i,
   input  logic                 dummy_instr_id_i,

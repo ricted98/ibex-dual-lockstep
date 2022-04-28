@@ -19,6 +19,7 @@ module ibex_register_file_latch #(
     // Clock and Reset
     input  logic                 clk_i,
     input  logic                 rst_ni,
+    input  logic                 setback_i,
 
     input  logic                 test_en_i,
     input  logic                 dummy_instr_id_i,
@@ -80,8 +81,12 @@ module ibex_register_file_latch #(
     if (!rst_ni) begin
       wdata_a_q   <= '0;
     end else begin
-      if (we_a_i) begin
-        wdata_a_q <= wdata_a_i;
+      if (setback_i) begin
+        wdata_a_q   <= '0;
+      end else begin
+        if (we_a_i) begin
+          wdata_a_q <= wdata_a_i;
+        end
       end
     end
   end

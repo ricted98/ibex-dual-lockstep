@@ -16,6 +16,7 @@
 module ibex_compressed_decoder (
     input  logic        clk_i,
     input  logic        rst_ni,
+    input  logic        setback_i,
     input  logic        valid_i,
     input  logic [31:0] instr_i,
     output logic [31:0] instr_o,
