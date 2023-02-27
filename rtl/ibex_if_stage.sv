@@ -11,6 +11,7 @@
  */
 
 `include "prim_assert.sv"
+`include "dv_fcov_macros.svh"
 
 module ibex_if_stage import ibex_pkg::*; #(
   parameter int unsigned DmHaltAddr        = 32'h1A110800,
@@ -108,6 +109,7 @@ module ibex_if_stage import ibex_pkg::*; #(
   input  logic [31:0]                 csr_depc_i,               // PC to restore after handling
                                                                 // the debug request
   input  logic [31:0]                 csr_mtvec_i,              // base PC to jump to on exception
+  input  logic [31:0]                 csr_mtvecx_i,             // base PC to jump to on x interrupts
   output logic                        csr_mtvec_init_o,         // tell CS regfile to init mtvec
 
   // pipeline stall
@@ -172,10 +174,12 @@ module ibex_if_stage import ibex_pkg::*; #(
 
   logic        [7:0] unused_boot_addr;
   logic        [7:0] unused_csr_mtvec;
+  logic        [7:0] unused_csr_mtvecx;
   logic              unused_exc_cause;
 
   assign unused_boot_addr = boot_addr_i[7:0];
   assign unused_csr_mtvec = csr_mtvec_i[7:0];
+  assign unused_csr_mtvecx = csr_mtvecx_i[7:0];
 
   assign unused_exc_cause = |{exc_cause.irq_ext, exc_cause.irq_int};
 
@@ -191,6 +195,7 @@ module ibex_if_stage import ibex_pkg::*; #(
     unique case (exc_pc_mux_i)
       EXC_PC_EXC:     exc_pc = { csr_mtvec_i[31:8], 8'h00                };
       EXC_PC_IRQ:     exc_pc = { csr_mtvec_i[31:8], 1'b0, irq_vec, 2'b00 };
+      EXC_PC_IRQ_X:   exc_pc = { csr_mtvecx_i[31:8],1'b0, irq_vec, 2'b00 };
       EXC_PC_DBD:     exc_pc = DmHaltAddr;
       EXC_PC_DBG_EXC: exc_pc = DmExceptionAddr;
       default:        exc_pc = { csr_mtvec_i[31:8], 8'h00                };

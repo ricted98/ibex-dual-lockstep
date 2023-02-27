@@ -77,6 +77,9 @@ module ibex_top import ibex_pkg::*; #(
   input  logic                         irq_external_i,
   input  logic [14:0]                  irq_fast_i,
   input  logic                         irq_nm_i,       // non-maskeable interrupt
+  input  logic [31:0]                  irq_x_i,
+  output logic                         irq_x_ack_o,
+  output logic [4:0]                   irq_x_ack_id_o,
 
   // Scrambling Interface
   input  logic                         scramble_key_valid_i,
@@ -358,6 +361,9 @@ module ibex_top import ibex_pkg::*; #(
     .irq_external_i,
     .irq_fast_i,
     .irq_nm_i,
+    .irq_x_i,
+    .irq_x_ack_o,
+    .irq_x_ack_id_o,
     .irq_pending_o(irq_pending),
 
     .debug_req_i,

@@ -16,12 +16,21 @@ sources:
       - rtl
       - vendor/lowrisc_ip/ip/prim/rtl
       - dv/uvm/core_ibex/common/prim
+      - vendor/lowrisc_ip/dv/sv/dv_utils
 
     files:
       # Source files grouped in levels. Files in level 0 have no dependencies on files in this
       # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
       # levels 1 and 0, etc. Files within a level are ordered alphabetically.
       # Level 0
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_cipher_pkg.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_pkg.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_pkg.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_util_pkg.sv
+      - vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_clock_gating.sv
+      - vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_buf.sv
+      - dv/uvm/core_ibex/common/prim/prim_pkg.sv
+      # Level 1
       - rtl/ibex_pkg.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_lfsr.sv
@@ -32,9 +41,11 @@ sources:
       - dv/uvm/core_ibex/common/prim/prim_flop.sv
       - dv/uvm/core_ibex/common/prim/prim_buf.sv
       - dv/uvm/core_ibex/common/prim/prim_clock_mux2.sv
+      - dv/uvm/core_ibex/common/prim/prim_clock_gating.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_scr.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_onehot_check.sv
-      # Level 1
+      - vendor/lowrisc_ip/dv/sv/dv_utils/dv_fcov_macros.svh
+      # Level 2
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
@@ -50,16 +61,15 @@ sources:
       - rtl/ibex_branch_predict.sv
       - rtl/ibex_dummy_instr.sv
       - rtl/ibex_icache.sv
-      - rtl/ibex_branch_predict.sv
       - rtl/ibex_pmp_reset_default.svh
-      # Level 2
+      # Level 3
       - rtl/ibex_cs_registers.sv
       - rtl/ibex_ex_block.sv
       - rtl/ibex_id_stage.sv
       - rtl/ibex_prefetch_buffer.sv
-      # Level 3
-      - rtl/ibex_if_stage.sv
       # Level 4
+      - rtl/ibex_if_stage.sv
+      # Level 5
       - rtl/ibex_core.sv
       # Level 6
       - rtl/ibex_lockstep.sv
@@ -72,10 +82,20 @@ sources:
     include_dirs:
       - rtl
       - vendor/lowrisc_ip/ip/prim/rtl
+      - dv/uvm/core_ibex/common/prim
+      - vendor/lowrisc_ip/dv/sv/dv_utils
     defines:
       RVFI: true
     files:
       # Level 0
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_cipher_pkg.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_pkg.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_pkg.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_util_pkg.sv
+      - vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_clock_gating.sv
+      - vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_buf.sv
+      - dv/uvm/core_ibex/common/prim/prim_pkg.sv
+      # Level 1
       - rtl/ibex_pkg.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_lfsr.sv
@@ -86,9 +106,11 @@ sources:
       - dv/uvm/core_ibex/common/prim/prim_flop.sv
       - dv/uvm/core_ibex/common/prim/prim_buf.sv
       - dv/uvm/core_ibex/common/prim/prim_clock_mux2.sv
+      - dv/uvm/core_ibex/common/prim/prim_clock_gating.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_scr.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_onehot_check.sv
-      # Level 1
+      - vendor/lowrisc_ip/dv/sv/dv_utils/dv_fcov_macros.svh
+      # Level 2
       - rtl/ibex_alu.sv
       - rtl/ibex_compressed_decoder.sv
       - rtl/ibex_controller.sv
@@ -105,21 +127,20 @@ sources:
       - rtl/ibex_branch_predict.sv
       - rtl/ibex_dummy_instr.sv
       - rtl/ibex_icache.sv
-      - rtl/ibex_branch_predict.sv
       - rtl/ibex_pmp_reset_default.svh
-      # Level 2
+      # Level 3
       - rtl/ibex_cs_registers.sv
       - rtl/ibex_ex_block.sv
       - rtl/ibex_id_stage.sv
       - rtl/ibex_prefetch_buffer.sv
       - rtl/ibex_tracer.sv
-      # Level 3
-      - rtl/ibex_if_stage.sv
       # Level 4
+      - rtl/ibex_if_stage.sv
+      # Level 5
       - rtl/ibex_core.sv
       # Level 6
       - rtl/ibex_lockstep.sv
       # Level 7
       - rtl/ibex_top.sv
       # Level 8
-      - rtl/tracer_top_tracing.sv
+      - rtl/ibex_top_tracing.sv

@@ -301,9 +301,10 @@ package ibex_pkg;
   } pc_sel_e;
 
   // Exception PC mux selection
-  typedef enum logic [1:0] {
+  typedef enum logic [2:0] {
     EXC_PC_EXC,
     EXC_PC_IRQ,
+    EXC_PC_IRQ_X,
     EXC_PC_DBD,
     EXC_PC_DBG_EXC // Exception while in debug mode
   } exc_pc_sel_e;
@@ -492,6 +493,11 @@ package ibex_pkg;
     // Debug
     CSR_DSCRATCH0 = 12'h7b2, // optional
     CSR_DSCRATCH1 = 12'h7b3, // optional
+
+    // CLINTx
+    CSR_MIEX      = 12'h7D0,
+    CSR_MTVECX    = 12'h7D1,
+    CSR_MIPX      = 12'h7D2,
 
     // Machine Counter/Timers
     CSR_MCOUNTINHIBIT  = 12'h320,
