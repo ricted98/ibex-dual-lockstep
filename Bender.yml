@@ -1,0 +1,125 @@
+package:
+  name: ibex
+
+dependencies:
+  tech_cells_generic: { git: "https://github.com/pulp-platform/tech_cells_generic.git", version: 0.2.2 }
+
+sources:
+  # All register file implementations are included in compilation by default,
+  # please select the appropriate version when instantiating ibex_core.
+  - rtl/ibex_register_file_latch.sv
+  - rtl/ibex_register_file_ff.sv
+  - rtl/ibex_register_file_fpga.sv
+
+  - target: not(all(any(test, ibex_include_tracer), not(ibex_exclude_tracer)))
+    include_dirs:
+      - rtl
+      - vendor/lowrisc_ip/ip/prim/rtl
+      - dv/uvm/core_ibex/common/prim
+
+    files:
+      # Source files grouped in levels. Files in level 0 have no dependencies on files in this
+      # package. Files in level 1 only depend on files in level 0, files in level 2 on files in
+      # levels 1 and 0, etc. Files within a level are ordered alphabetically.
+      # Level 0
+      - rtl/ibex_pkg.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_lfsr.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_28_22_dec.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_28_22_enc.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_dec.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_enc.sv
+      - dv/uvm/core_ibex/common/prim/prim_flop.sv
+      - dv/uvm/core_ibex/common/prim/prim_buf.sv
+      - dv/uvm/core_ibex/common/prim/prim_clock_mux2.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_scr.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_onehot_check.sv
+      # Level 1
+      - rtl/ibex_alu.sv
+      - rtl/ibex_compressed_decoder.sv
+      - rtl/ibex_controller.sv
+      - rtl/ibex_counter.sv
+      - rtl/ibex_csr.sv
+      - rtl/ibex_decoder.sv
+      - rtl/ibex_fetch_fifo.sv
+      - rtl/ibex_load_store_unit.sv
+      - rtl/ibex_multdiv_fast.sv
+      - rtl/ibex_multdiv_slow.sv
+      - rtl/ibex_pmp.sv
+      - rtl/ibex_wb_stage.sv
+      - rtl/ibex_branch_predict.sv
+      - rtl/ibex_dummy_instr.sv
+      - rtl/ibex_icache.sv
+      - rtl/ibex_branch_predict.sv
+      - rtl/ibex_pmp_reset_default.svh
+      # Level 2
+      - rtl/ibex_cs_registers.sv
+      - rtl/ibex_ex_block.sv
+      - rtl/ibex_id_stage.sv
+      - rtl/ibex_prefetch_buffer.sv
+      # Level 3
+      - rtl/ibex_if_stage.sv
+      # Level 4
+      - rtl/ibex_core.sv
+      # Level 6
+      - rtl/ibex_lockstep.sv
+      # Level 7
+      - rtl/ibex_top.sv
+
+  # In case we target RTL simulation, recompile the whole core with the RISC-V
+  # formal interface so the tracer module works (`define RVFI).
+  - target: all(any(test, ibex_include_tracer), not(ibex_exclude_tracer))  
+    include_dirs:
+      - rtl
+      - vendor/lowrisc_ip/ip/prim/rtl
+    defines:
+      RVFI: true
+    files:
+      # Level 0
+      - rtl/ibex_pkg.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_assert.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_lfsr.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_28_22_dec.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_28_22_enc.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_dec.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_enc.sv
+      - dv/uvm/core_ibex/common/prim/prim_flop.sv
+      - dv/uvm/core_ibex/common/prim/prim_buf.sv
+      - dv/uvm/core_ibex/common/prim/prim_clock_mux2.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_ram_1p_scr.sv
+      - vendor/lowrisc_ip/ip/prim/rtl/prim_onehot_check.sv
+      # Level 1
+      - rtl/ibex_alu.sv
+      - rtl/ibex_compressed_decoder.sv
+      - rtl/ibex_controller.sv
+      - rtl/ibex_counter.sv
+      - rtl/ibex_csr.sv
+      - rtl/ibex_decoder.sv
+      - rtl/ibex_fetch_fifo.sv
+      - rtl/ibex_load_store_unit.sv
+      - rtl/ibex_multdiv_fast.sv
+      - rtl/ibex_multdiv_slow.sv
+      - rtl/ibex_pmp.sv
+      - rtl/ibex_tracer_pkg.sv
+      - rtl/ibex_wb_stage.sv
+      - rtl/ibex_branch_predict.sv
+      - rtl/ibex_dummy_instr.sv
+      - rtl/ibex_icache.sv
+      - rtl/ibex_branch_predict.sv
+      - rtl/ibex_pmp_reset_default.svh
+      # Level 2
+      - rtl/ibex_cs_registers.sv
+      - rtl/ibex_ex_block.sv
+      - rtl/ibex_id_stage.sv
+      - rtl/ibex_prefetch_buffer.sv
+      - rtl/ibex_tracer.sv
+      # Level 3
+      - rtl/ibex_if_stage.sv
+      # Level 4
+      - rtl/ibex_core.sv
+      # Level 6
+      - rtl/ibex_lockstep.sv
+      # Level 7
+      - rtl/ibex_top.sv
+      # Level 8
+      - rtl/tracer_top_tracing.sv
