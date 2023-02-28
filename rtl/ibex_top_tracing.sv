@@ -70,7 +70,7 @@ module ibex_top_tracing import ibex_pkg::*; #(
   input  logic                         irq_external_i,
   input  logic [14:0]                  irq_fast_i,
   input  logic                         irq_nm_i,       // non-maskeable interrupt
-  output logic [31:0]                  irq_x_i,
+  input  logic [31:0]                  irq_x_i,
   output logic                         irq_x_ack_o,
   output logic [3:0]                   irq_x_ack_id_o,
 
