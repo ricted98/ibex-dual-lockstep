@@ -92,6 +92,9 @@ module ibex_lockstep import ibex_pkg::*; #(
   input  logic [14:0]                  irq_fast_i,
   input  logic                         irq_nm_i,
   input  logic                         irq_pending_i,
+  input  logic [31:0]                  irq_x_i,
+  input  logic                         irq_x_ack_i,
+  input  logic [4:0]                   irq_x_ack_id_i,
 
   input  logic                         debug_req_i,
   input  crash_dump_t                  crash_dump_i,
@@ -186,6 +189,7 @@ module ibex_lockstep import ibex_pkg::*; #(
     logic                        debug_req;
     ibex_mubi_t                  fetch_enable;
     logic                        ic_scr_key_valid;
+    logic [31:0]                 irq_x;
   } delayed_inputs_t;
 
   delayed_inputs_t [LockstepOffset-1:0] shadow_inputs_q;
@@ -213,6 +217,8 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign shadow_inputs_in.debug_req        = debug_req_i;
   assign shadow_inputs_in.fetch_enable     = fetch_enable_i;
   assign shadow_inputs_in.ic_scr_key_valid = ic_scr_key_valid_i;
+
+  assign shadow_inputs_in.irq_x            = irq_x_i;
 
   // Delay the inputs
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -266,6 +272,8 @@ module ibex_lockstep import ibex_pkg::*; #(
     crash_dump_t                 crash_dump;
     logic                        double_fault_seen;
     ibex_mubi_t                  core_busy;
+    logic                        irq_x_ack;
+    logic [4:0]                  irq_x_ack_id;
   } delayed_outputs_t;
 
   delayed_outputs_t [OutputsOffset-1:0]  core_outputs_q;
@@ -300,6 +308,9 @@ module ibex_lockstep import ibex_pkg::*; #(
   assign core_outputs_in.crash_dump          = crash_dump_i;
   assign core_outputs_in.double_fault_seen   = double_fault_seen_i;
   assign core_outputs_in.core_busy           = core_busy_i;
+
+  assign core_outputs_in.irq_x_ack           = irq_x_ack_i;
+  assign core_outputs_in.irq_x_ack_id        = irq_x_ack_id_i;
 
   // Delay the outputs
   always_ff @(posedge clk_i) begin
@@ -398,6 +409,10 @@ module ibex_lockstep import ibex_pkg::*; #(
     .irq_fast_i          (shadow_inputs_q[0].irq_fast),
     .irq_nm_i            (shadow_inputs_q[0].irq_nm),
     .irq_pending_o       (shadow_outputs_d.irq_pending),
+
+    .irq_x_i             (shadow_inputs_q[0].irq_x),
+    .irq_x_ack_o         (shadow_outputs_d.irq_x_ack),
+    .irq_x_ack_id_o      (shadow_outputs_d.irq_x_ack_id),
 
     .debug_req_i         (shadow_inputs_q[0].debug_req),
     .crash_dump_o        (shadow_outputs_d.crash_dump),

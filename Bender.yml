@@ -38,6 +38,8 @@ sources:
       - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_28_22_enc.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_dec.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_enc.sv
+      - vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_flop.sv
+      - vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_clock_mux2.sv
       - dv/uvm/core_ibex/common/prim/prim_flop.sv
       - dv/uvm/core_ibex/common/prim/prim_buf.sv
       - dv/uvm/core_ibex/common/prim/prim_clock_mux2.sv
@@ -103,6 +105,8 @@ sources:
       - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_28_22_enc.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_dec.sv
       - vendor/lowrisc_ip/ip/prim/rtl/prim_secded_inv_39_32_enc.sv
+      - vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_flop.sv
+      - vendor/lowrisc_ip/ip/prim_generic/rtl/prim_generic_clock_mux2.sv
       - dv/uvm/core_ibex/common/prim/prim_flop.sv
       - dv/uvm/core_ibex/common/prim/prim_buf.sv
       - dv/uvm/core_ibex/common/prim/prim_clock_mux2.sv

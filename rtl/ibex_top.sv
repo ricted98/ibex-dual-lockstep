@@ -30,6 +30,7 @@ module ibex_top import ibex_pkg::*; #(
   parameter bit          DbgTriggerEn     = 1'b0,
   parameter int unsigned DbgHwBreakNum    = 1,
   parameter bit          SecureIbex       = 1'b0,
+  parameter bit          Lockstep         = 1'b0,
   parameter bit          ICacheScramble   = 1'b0,
   parameter lfsr_seed_t  RndCnstLfsrSeed  = RndCnstLfsrSeedDefault,
   parameter lfsr_perm_t  RndCnstLfsrPerm  = RndCnstLfsrPermDefault,
@@ -142,7 +143,7 @@ module ibex_top import ibex_pkg::*; #(
   input logic                          scan_rst_ni
 );
 
-  localparam bit          Lockstep          = SecureIbex;
+  // localparam bit          Lockstep          = SecureIbex;
   localparam bit          ResetAll          = Lockstep;
   localparam bit          DummyInstructions = SecureIbex;
   localparam bit          RegFileECC        = SecureIbex;
@@ -778,6 +779,9 @@ module ibex_top import ibex_pkg::*; #(
       irq_external_i,
       irq_fast_i,
       irq_nm_i,
+      irq_x_i,
+      irq_x_ack_o,
+      irq_x_ack_id_o,
       irq_pending,
       debug_req_i,
       crash_dump_o,
@@ -836,6 +840,10 @@ module ibex_top import ibex_pkg::*; #(
     logic                         irq_nm_local;
     logic                         irq_pending_local;
 
+    logic [31:0]                  irq_x_local;
+    logic                         irq_x_ack_local;
+    logic [4:0]                   irq_x_ack_id_local;
+
     logic                         debug_req_local;
     crash_dump_t                  crash_dump_local;
     logic                         double_fault_seen_local;
@@ -885,6 +893,9 @@ module ibex_top import ibex_pkg::*; #(
       irq_external_i,
       irq_fast_i,
       irq_nm_i,
+      irq_x_i,
+      irq_x_ack_o,
+      irq_x_ack_id_o,
       irq_pending,
       debug_req_i,
       crash_dump_o,
@@ -935,6 +946,9 @@ module ibex_top import ibex_pkg::*; #(
       irq_external_local,
       irq_fast_local,
       irq_nm_local,
+      irq_x_local,
+      irq_x_ack_local,
+      irq_x_ack_id_local,
       irq_pending_local,
       debug_req_local,
       crash_dump_local,
@@ -1048,6 +1062,10 @@ module ibex_top import ibex_pkg::*; #(
       .irq_nm_i               (irq_nm_local),
       .irq_pending_i          (irq_pending_local),
 
+      .irq_x_i                (irq_x_local),
+      .irq_x_ack_i            (irq_x_ack_local),
+      .irq_x_ack_id_i         (irq_x_ack_id_local),
+
       .debug_req_i            (debug_req_local),
       .crash_dump_i           (crash_dump_local),
       .double_fault_seen_i    (double_fault_seen_local),
@@ -1104,6 +1122,10 @@ module ibex_top import ibex_pkg::*; #(
   `ASSERT_KNOWN(IbexAlertMajorInternalX, alert_major_internal_o)
   `ASSERT_KNOWN(IbexAlertMajorBusX, alert_major_bus_o)
   `ASSERT_KNOWN(IbexCoreSleepX, core_sleep_o)
+
+  // No major alerts should happen
+  `ASSERT_NEVER(IbexAlertMajorInternal, alert_major_internal_o)
+  `ASSERT_NEVER(IbexAlertMajorBus, alert_major_internal_o)
 
   // X check for top-level inputs
   `ASSERT_KNOWN(IbexTestEnX, test_en_i)
